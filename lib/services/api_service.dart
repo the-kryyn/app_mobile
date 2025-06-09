@@ -60,4 +60,48 @@ class ApiService {
     // Simulate salinity between 20.0 and 40.0 (adjust as needed)
     return 20 + random.nextDouble() * 20;
   }
+
+  /// Function to call the /fill endpoint
+  static Future<void> fillTank() async {
+    final baseUrl = BaseUrlService.getBaseUrl();
+    final uri = Uri.parse('$baseUrl/fill');
+
+    try {
+      final response = await http.get(uri).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return; // Success
+      } else if (response.statusCode == 500) {
+        throw Exception("Erreur serveur: échec du remplissage.");
+      } else {
+        throw Exception("Erreur inattendue: ${response.statusCode}");
+      }
+    } on TimeoutException {
+      throw TimeoutException("La requête a expiré.");
+    } catch (e) {
+      throw Exception("Erreur lors de la commande de remplissage: $e");
+    }
+  }
+
+  /// Function to call the /vidange endpoint
+  static Future<void> drainTank() async {
+    final baseUrl = BaseUrlService.getBaseUrl();
+    final uri = Uri.parse('$baseUrl/vidange');
+
+    try {
+      final response = await http.get(uri).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        return; // Success
+      } else if (response.statusCode == 500) {
+        throw Exception("Erreur serveur: échec de la vidange.");
+      } else {
+        throw Exception("Erreur inattendue: ${response.statusCode}");
+      }
+    } on TimeoutException {
+      throw TimeoutException("La requête a expiré.");
+    } catch (e) {
+      throw Exception("Erreur lors de la commande de vidange: $e");
+    }
+  }
 }

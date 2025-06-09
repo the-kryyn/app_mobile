@@ -21,6 +21,8 @@ class _HomePageState extends State<HomePage> {
 
   final RefreshController _refreshController = RefreshController();
 
+  bool _isActionInProgress = false;
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +126,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _triggerAction(
+    Future<void> Function() action,
+    String successMessage,
+  ) async {
+    setState(() => _isActionInProgress = true);
+    try {
+      await action();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isActionInProgress = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -163,13 +186,64 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      floatingActionButton: (_salinity != null && !_isLoading && _error == null)
-          ? FloatingActionButton(
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(
+            width: 180,
+            child: FloatingActionButton.extended(
+              heroTag: 'fill_button',
+              onPressed: _isActionInProgress
+                  ? null
+                  : () => _triggerAction(
+                      () => ApiService.fillTank(),
+                      'Remplissage effectué avec succès.',
+                    ),
+              label: const Text('Remplir'),
+              icon: const Icon(Icons.water_drop),
+              backgroundColor: _isActionInProgress
+                  ? Colors.grey
+                  : scheme.primary,
+              foregroundColor: _isActionInProgress
+                  ? Colors.black45
+                  : scheme.onPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 180,
+            child: FloatingActionButton.extended(
+              heroTag: 'drain_button',
+              onPressed: _isActionInProgress
+                  ? null
+                  : () => _triggerAction(
+                      () => ApiService.drainTank(),
+                      'Vidange effectuée avec succès.',
+                    ),
+              label: const Text('Vidanger'),
+              icon: const Icon(Icons.opacity),
+              backgroundColor: _isActionInProgress
+                  ? Colors.grey
+                  : scheme.secondary,
+              foregroundColor: _isActionInProgress
+                  ? Colors.black45
+                  : scheme.onSecondary,
+            ),
+          ),
+          if (_salinity != null && !_isLoading && _error == null) ...[
+            const SizedBox(height: 12),
+            FloatingActionButton(
+              heroTag: 'save_button',
               onPressed: _saveSalinityToLocalStorage,
               tooltip: 'Enregistrer',
               child: const Icon(Icons.save),
-            )
-          : null,
+              backgroundColor: scheme.primary,
+              foregroundColor: scheme.onPrimary,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
