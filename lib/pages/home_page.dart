@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   double? _salinity;
   String? _error;
   bool _isLoading = true;
+  bool _hasFilledOnce = false;
 
   final RefreshController _refreshController = RefreshController();
 
@@ -194,18 +195,23 @@ class _HomePageState extends State<HomePage> {
             width: 180,
             child: FloatingActionButton.extended(
               heroTag: 'fill_button',
-              onPressed: _isActionInProgress
+              onPressed: (_isActionInProgress || _hasFilledOnce)
                   ? null
-                  : () => _triggerAction(
-                      () => ApiService.fillTank(),
-                      'Remplissage effectué avec succès.',
-                    ),
+                  : () async {
+                      await _triggerAction(
+                        () => ApiService.fillTank(),
+                        'Remplissage effectué avec succès.',
+                      );
+                      if (mounted) {
+                        setState(() => _hasFilledOnce = true);
+                      }
+                    },
               label: const Text('Remplir'),
               icon: const Icon(Icons.water_drop),
-              backgroundColor: _isActionInProgress
+              backgroundColor: (_isActionInProgress || _hasFilledOnce)
                   ? Colors.grey
                   : scheme.primary,
-              foregroundColor: _isActionInProgress
+              foregroundColor: (_isActionInProgress || _hasFilledOnce)
                   ? Colors.black45
                   : scheme.onPrimary,
             ),
